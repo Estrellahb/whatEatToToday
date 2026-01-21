@@ -1,0 +1,102 @@
+---
+description: DevOps 自动化工作流，适用于 CI/CD 流水线配置
+globs: .github/**/*.yml,Dockerfile,docker-compose.yml
+alwaysApply: false
+---
+
+# DevOps 自动化工作流
+
+本方案基于 CI/CD（持续集成/持续部署）理念，确保从代码提交到用户手机端的全自动化。
+
+## 1. 阶段化流水线设计
+
+### 第一阶段：代码提交 (Code & Commit)
+
+| 项目 | 说明 |
+|------|------|
+| 工具 | GitHub |
+| 触发 | 开发者 Push 代码到 main 分支 |
+| 最佳实践 | 使用 pre-commit 钩子，在本地执行代码格式化（Prettier/Black） |
+
+### 第二阶段：持续集成 (CI - Automated Testing)
+
+**工具**：GitHub Actions
+
+**任务清单**：
+- **Django 检查**：运行 `python manage.py test` 验证 API 逻辑
+- **前端检查**：运行 `eslint` 检查 React Native 语法
+- **AI 校验**：调用脚本测试 DeepSeek API 的连通性
+
+### 第三阶段：持续部署 (CD - Deployment)
+
+**前端 (Mobile) - EAS**
+```bash
+# 生成 iOS/Android 安装包
+eas build
+
+# 推送最新 UI 更改到用户手机（OTA）
+eas update
+```
+
+**后端 (Server) - Docker**
+- 将 Django + Gunicorn 打包成 Docker 镜像
+- 部署至云平台
+
+---
+
+## 2. 运维与监控 (Ops & Monitoring)
+
+### 错误追踪
+- 集成 **Sentry**
+- App 崩溃或 Django API 报错时，第一时间通过 Webhook 通知
+
+### 成本监控
+- 在 Django 后端记录每次调用 DeepSeek API 的 Token 消耗
+- 防止额度超支
+
+### 数据同步
+- 设置定时任务（Cron Job）
+- 每周自动拉取一次 GitHub 的最新食谱
+- 同步到 PostgreSQL
+
+---
+
+## 3. GitHub Actions 示例
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: python manage.py test
+
+  frontend-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install & Lint
+        run: |
+          npm ci
+          npm run lint
+```

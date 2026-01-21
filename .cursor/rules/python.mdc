@@ -1,0 +1,71 @@
+---
+description: Python 编程规范，适用于 Django 后端及 AI 集成模块
+globs: **/*.py
+alwaysApply: false
+---
+
+# Python 编程规范
+
+## 代码风格
+- 遵循 PEP 8 规范
+- 使用 4 空格缩进，禁止 Tab
+- 行长度不超过 120 字符
+- 使用双引号作为字符串默认引号
+
+## 命名约定
+- 模块/文件名：`snake_case`（如 `recipe_service.py`）
+- 类名：`PascalCase`（如 `RecipeService`）
+- 函数/变量：`snake_case`（如 `get_recipe_by_id`）
+- 常量：`UPPER_SNAKE_CASE`（如 `MAX_RETRY_COUNT`）
+- 私有成员：前缀单下划线 `_private_method`
+
+## 类型注解
+- 所有公共函数必须添加类型注解
+- 使用 `typing` 模块进行复杂类型定义
+- DRF Serializer 用于数据验证
+
+```python
+from typing import Optional, List
+from dataclasses import dataclass
+
+@dataclass
+class RecipeDTO:
+    title: str
+    difficulty: int
+    ingredients: list[str]
+
+def get_recipe(recipe_id: int) -> Optional[Recipe]:
+    ...
+```
+
+## 异步编程
+- I/O 密集型操作使用 `async/await`
+- 数据库查询、外部 API 调用必须异步
+- 使用 `asyncio` 管理并发任务
+
+## 错误处理
+- 使用自定义异常类
+- 捕获具体异常，避免裸 `except`
+- 日志记录异常堆栈
+
+## 导入顺序
+1. 标准库
+2. 第三方库
+3. 本地模块
+
+```python
+import os
+from typing import List
+
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+
+from app.models import Recipe
+from app.services import RecipeService
+```
+
+## AI 集成（DeepSeek）
+- API Key 通过环境变量注入
+- 设置合理的 timeout 和 retry
+- 使用结构化输出解析 AI 响应
+- 封装统一的 AI Service 层

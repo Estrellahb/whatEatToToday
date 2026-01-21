@@ -1,0 +1,73 @@
+---
+description: 敏捷开发与最佳实践指南，适用于 AI 驱动的开发流程
+globs: 
+alwaysApply: true
+---
+
+# 敏捷开发与最佳实践指南
+
+本指南侧重于利用 AI 提效，同时通过敏捷方法论确保项目不偏离核心需求。
+
+## 1. 敏捷开发框架：AI 驱动的 Lean Scrum
+
+采用 **1 周为一个 Sprint** 的节奏：
+
+### P0 - 需求梳理 (Grooming)
+利用 DeepSeek 分析 GitHub 菜谱数据的结构，确定本周要实现的 API 和 UI 页面。
+
+### P1 - 任务拆解 (MoSCoW)
+| 优先级 | 内容 |
+|--------|------|
+| **Must have** | 核心推荐算法、基础食谱展示 |
+| **Should have** | 营养成分计算、用户口味调研问卷 |
+
+### P2 - 持续交付
+每周末产出一个可运行的 Expo 预览版，直接在手机上通过 Expo Go 体验。
+
+---
+
+## 2. 核心技术最佳实践
+
+### 前端 (React Native + Expo)
+
+**TypeScript 第一原则**
+- 所有组件和 API 请求必须定义 Interface
+- 方便 AI 准确补全代码
+
+**原子化设计**
+- 将食谱卡片、营养标签拆分为独立组件
+- 提高复用率
+
+**EAS Update**
+- 利用 Expo 的 OTA 属性
+- 在不经过商店审核的情况下快速修复 UI 小 Bug
+
+### 后端 (Django)
+
+**DRF (Django REST Framework)**
+- 统一使用 JSON 响应
+- 确保与前端的解耦
+
+**Type Hints**
+- 在 Python 代码中使用类型提示
+- 能让 DeepSeek 在帮你写逻辑时减少 80% 的类型错误
+
+**AI 提示词版本化**
+- 将用于计算营养价值的 Prompt 存储在代码库中
+- 路径：`prompts/nutrition_analysis.txt`
+- 禁止硬编码在逻辑里
+
+---
+
+## 3. AI 协同最佳实践
+
+### 结对编程 (Pair Programming)
+不要让 AI 盲目写长代码，采用三步法：
+
+1. **意图**：先描述清楚要实现什么
+2. **骨架**：让 AI 写逻辑伪代码
+3. **细节**：确认骨架后再生成具体实现
+
+### AI Code Review
+在提交代码前，将代码片段发给其他 AI，询问：
+> "这段代码是否存在性能瓶颈或安全风险？"

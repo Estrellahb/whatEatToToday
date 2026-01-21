@@ -1,0 +1,101 @@
+---
+description: Git 提交规范，适用于版本控制
+globs: 
+alwaysApply: true
+---
+
+# Git 提交规范
+
+## Commit Message 格式
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+## Type 类型
+| 类型 | 说明 |
+|------|------|
+| `feat` | 新功能 |
+| `fix` | Bug 修复 |
+| `docs` | 文档变更 |
+| `style` | 代码格式（不影响逻辑） |
+| `refactor` | 重构（非 feat/fix） |
+| `perf` | 性能优化 |
+| `test` | 测试相关 |
+| `chore` | 构建/工具变更 |
+| `ci` | CI 配置变更 |
+
+## Scope 范围
+- `api` - 后端接口
+- `ui` - 前端界面
+- `db` - 数据库相关
+- `auth` - 认证授权
+- `recipe` - 食谱模块
+- `user` - 用户模块
+- `ai` - AI 集成
+
+## Subject 规则
+- 使用中文或英文（项目统一）
+- 不超过 50 字符
+- 不加句号结尾
+- 使用祈使语气
+
+## 示例
+```
+feat(recipe): 添加根据食材搜索食谱功能
+
+实现反向检索逻辑，用户可以输入冰箱现有食材，
+系统返回可制作的菜谱列表。
+
+Closes #123
+```
+
+```
+fix(api): 修复营养成分计算精度问题
+
+将浮点数计算改为 Decimal 类型，避免精度丢失
+```
+
+## 分支命名
+- 功能分支：`feature/<scope>-<description>`
+- 修复分支：`fix/<scope>-<description>`
+- 热修复：`hotfix/<description>`
+
+示例：
+- `feature/recipe-search`
+- `fix/nutrition-calculation`
+
+## 合并规则
+- `main` 分支：仅通过 PR 合并
+- PR 需要至少 1 人 Review
+- CI 检查通过后方可合并
+- 使用 Squash Merge 保持历史整洁
+
+## .gitignore 必须包含
+```
+# 环境配置
+.env
+.env.local
+
+# 依赖
+node_modules/
+__pycache__/
+.venv/
+
+# 构建产物
+dist/
+build/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# 系统文件
+.DS_Store
+Thumbs.db
+```

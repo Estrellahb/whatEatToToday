@@ -1,0 +1,95 @@
+---
+description: 文档编写规范，适用于项目文档和代码注释
+globs: **/*.{md,mdx}
+alwaysApply: false
+---
+
+# 文档编写规范
+
+## 文档语言
+- 面向用户文档：中文
+- 代码注释：中文或英文（保持一致）
+- API 文档：英文
+
+## Markdown 格式
+- 标题层级不超过 4 级
+- 代码块标注语言类型
+- 表格对齐使用管道符
+- 图片使用相对路径
+
+## README 结构
+```markdown
+# 项目名称
+
+简短描述（一句话）
+
+## 功能特性
+- 特性 1
+- 特性 2
+
+## 快速开始
+
+### 环境要求
+- Node.js >= 18
+- Python >= 3.10
+
+### 安装
+```bash
+npm install
+```
+
+### 运行
+```bash
+npm start
+```
+
+## 项目结构
+（目录树）
+
+## API 文档
+（链接或说明）
+
+## 贡献指南
+（PR 流程）
+
+## 许可证
+MIT
+```
+
+## 代码注释
+
+### Python Docstring
+```python
+def calculate_nutrition(ingredients: List[Ingredient]) -> NutritionSummary:
+    """计算食材的总营养成分。
+
+    Args:
+        ingredients: 食材列表，包含重量信息
+
+    Returns:
+        营养成分汇总，包含热量、蛋白质等
+
+    Raises:
+        ValueError: 当食材重量为负数时
+    """
+```
+
+### TypeScript JSDoc
+```typescript
+/**
+ * 获取推荐食谱列表
+ * @param filters - 筛选条件
+ * @returns 食谱列表的 Promise
+ */
+async function fetchRecipes(filters: RecipeFilters): Promise<Recipe[]>
+```
+
+## API 文档
+- 使用 FastAPI 自动生成 OpenAPI
+- 为每个端点添加 `summary` 和 `description`
+- 示例请求/响应使用 `example` 字段
+
+## 变更日志
+- 遵循 Keep a Changelog 格式
+- 版本号遵循语义化版本
+- 记录 Added/Changed/Deprecated/Removed/Fixed
