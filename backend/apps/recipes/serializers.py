@@ -16,7 +16,8 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     """食谱列表序列化器"""
     difficulty_display = serializers.CharField(source="get_difficulty_display", read_only=True)
-    meal_type_display = serializers.CharField(source="get_meal_type_display", read_only=True)
+    meal_types_display = serializers.ListField(source="get_meal_types_display", read_only=True)
+    dish_type_display = serializers.CharField(source="get_dish_type_display", read_only=True)
 
     class Meta:
         model = Recipe
@@ -27,8 +28,10 @@ class RecipeSerializer(serializers.ModelSerializer):
             "difficulty_display",
             "duration",
             "cover_url",
-            "meal_type",
-            "meal_type_display",
+            "meal_types",
+            "meal_types_display",
+            "dish_type",
+            "dish_type_display",
             "servings",
             "created_at",
         ]

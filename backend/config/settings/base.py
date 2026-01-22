@@ -29,7 +29,7 @@ INSTALLED_APPS = [
     # Local apps
     "apps.recipes",
     "apps.ingredients",
-    # "apps.users",  # MVP 阶段不使用，预留
+    "apps.users",
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>菜谱多彩卡片示例</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f2ec;
+        --text: #2b2b2b;
+        --muted: #6c6c6c;
+        --shadow: 0 20px 50px rgba(0, 0, 0, 0.16);
+        --card-radius: 22px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .page {
+        min-height: 100vh;
+        padding: 32px 16px 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .stack {
+        position: relative;
+        width: min(420px, 92vw);
+        height: clamp(560px, 78vh, 680px);
+      }
+
+      .card {
+        position: absolute;
+        inset: 0;
+        border-radius: var(--card-radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.25s ease, box-shadow 0.2s ease;
+        background: #fff;
+      }
+
+      .card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 26px 60px rgba(0, 0, 0, 0.2);
+      }
+
+      .card__visual {
+        position: relative;
+        padding: 22px 22px 18px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        color: #fff;
+        min-height: 150px;
+      }
+
+      .card__visual::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(140deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.55));
+      }
+
+      .card__visual > * {
+        position: relative;
+        z-index: 1;
+      }
+
+      .card__title {
+        margin: 0;
+        font-size: 24px;
+        letter-spacing: 0.5px;
+      }
+
+      .card__meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 14px;
+      }
+
+      .difficulty {
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(4px);
+      }
+
+      .card__content {
+        padding: 20px 22px 26px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        flex: 1;
+      }
+
+      .cover {
+        width: 100%;
+        height: 220px;
+        border-radius: 16px;
+        object-fit: cover;
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+      }
+
+      .card__info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .tags {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .tag {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        color: var(--muted);
+        background: #f0ede8;
+      }
+
+      .star-button {
+        border: none;
+        background: none;
+        cursor: pointer;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .star {
+        width: 22px;
+        height: 22px;
+        stroke: #b6b6b6;
+        fill: none;
+        stroke-width: 2;
+        transition: transform 0.2s ease, fill 0.2s ease, stroke 0.2s ease;
+      }
+
+      .star-button.is-active .star {
+        fill: #f5c542;
+        stroke: #f5c542;
+        transform: scale(1.1);
+      }
+
+      .star-button.is-active {
+        color: #c28f00;
+      }
+
+      .note {
+        margin-top: 16px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .edge-button {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 22%;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        z-index: 3;
+      }
+
+      .edge-button--left {
+        left: 0;
+      }
+
+      .edge-button--right {
+        right: 0;
+      }
+
+      .card.is-dragging {
+        transition: none;
+        cursor: grabbing;
+      }
+
+      .card.is-enter-right {
+        animation: enterFromRight 0.32s ease forwards;
+      }
+
+      .card.is-enter-left {
+        animation: enterFromLeft 0.32s ease forwards;
+      }
+
+      .card.is-leave-left {
+        animation: leaveToLeft 0.32s ease forwards;
+      }
+
+      .card.is-leave-right {
+        animation: leaveToRight 0.32s ease forwards;
+      }
+
+      @keyframes enterFromRight {
+        from {
+          transform: translateX(110%);
+          opacity: 0.9;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes enterFromLeft {
+        from {
+          transform: translateX(-110%);
+          opacity: 0.9;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes leaveToLeft {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(-110%);
+          opacity: 0.9;
+        }
+      }
+
+      @keyframes leaveToRight {
+        from {
+          transform: translateX(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateX(110%);
+          opacity: 0.9;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="stack" id="cardStack">
+        <button class="edge-button edge-button--left" type="button" aria-label="上一张"></button>
+        <button class="edge-button edge-button--right" type="button" aria-label="下一张"></button>
+      </section>
+    </main>
+
+    <template id="cardTemplate">
+      <article class="card">
+        <div class="card__visual">
+          <h2 class="card__title"></h2>
+          <div class="card__meta">
+            <span class="difficulty"></span>
+            <span class="meal"></span>
+          </div>
+        </div>
+        <div class="card__content">
+          <img class="cover" alt="菜谱封面" />
+          <div class="card__info">
+            <div class="tags"></div>
+            <button class="star-button" type="button" aria-pressed="false">
+              <svg class="star" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2.4l2.7 5.6 6.2.9-4.5 4.4 1.1 6.3-5.5-2.9-5.5 2.9 1.1-6.3L3.1 8.9l6.2-.9L12 2.4z" />
+              </svg>
+              <span>收藏</span>
+            </button>
+          </div>
+          <p class="note">点击星星可切换收藏状态</p>
+        </div>
+      </article>
+    </template>
+
+    <script>
+      const recipes = [
+        {
+          id: 1,
+          title: "可乐鸡翅",
+          difficulty: "难度：3星",
+          meal: "午餐 / 晚餐",
+          cover:
+            "https://images.unsplash.com/photo-1604908554149-3e6a7a5f50cb?auto=format&fit=crop&w=800&q=80",
+          tags: ["肉类", "微甜", "下饭"],
+          theme: "linear-gradient(135deg, #f9745b, #f9c14a)",
+        },
+        {
+          id: 2,
+          title: "番茄鸡蛋面",
+          difficulty: "难度：2星",
+          meal: "早餐 / 午餐",
+          cover:
+            "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=800&q=80",
+          tags: ["快速", "暖胃", "家常"],
+          theme: "linear-gradient(135deg, #f7b733, #fc4a1a)",
+        },
+        {
+          id: 3,
+          title: "香芒酸奶杯",
+          difficulty: "难度：1星",
+          meal: "甜点 / 饮品",
+          cover:
+            "https://images.unsplash.com/photo-1481931098730-318b6f776db0?auto=format&fit=crop&w=800&q=80",
+          tags: ["低脂", "清爽", "免火"],
+          theme: "linear-gradient(135deg, #6dd5ed, #2193b0)",
+        },
+      ];
+
+      const stack = document.getElementById("cardStack");
+      const template = document.getElementById("cardTemplate");
+      const favorites = new Set();
+      const stackSize = 3;
+      let currentIndex = 0;
+      let isAnimating = false;
+
+      function buildCard(recipe) {
+        const card = template.content.firstElementChild.cloneNode(true);
+        const visual = card.querySelector(".card__visual");
+        visual.style.backgroundImage = recipe.theme;
+        card.querySelector(".card__title").textContent = recipe.title;
+        card.querySelector(".difficulty").textContent = recipe.difficulty;
+        card.querySelector(".meal").textContent = recipe.meal;
+        card.querySelector(".cover").src = recipe.cover;
+
+        const tags = card.querySelector(".tags");
+        recipe.tags.forEach((tag) => {
+          const span = document.createElement("span");
+          span.className = "tag";
+          span.textContent = tag;
+          tags.appendChild(span);
+        });
+
+        const starButton = card.querySelector(".star-button");
+        const isFavorite = favorites.has(recipe.id);
+        starButton.classList.toggle("is-active", isFavorite);
+        starButton.setAttribute("aria-pressed", String(isFavorite));
+        starButton.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const isActive = starButton.classList.toggle("is-active");
+          starButton.setAttribute("aria-pressed", String(isActive));
+          if (isActive) {
+            favorites.add(recipe.id);
+          } else {
+            favorites.delete(recipe.id);
+          }
+        });
+
+        addDragHandlers(card);
+        return card;
+      }
+
+      function renderStack() {
+        stack.querySelectorAll(".card").forEach((card) => card.remove());
+        const total = recipes.length;
+        const maxCards = Math.min(stackSize, total);
+        for (let i = 0; i < maxCards; i += 1) {
+          const recipe = recipes[(currentIndex + i) % total];
+          const card = buildCard(recipe);
+          const offset = i * 16;
+          const scale = 1 - i * 0.03;
+          const rotate = i * 0.6;
+          card.style.transform = `translate(${offset}px, ${offset}px) scale(${scale}) rotate(${rotate}deg)`;
+          card.style.zIndex = String(maxCards - i);
+          stack.appendChild(card);
+          if (i === 0) {
+            addDragHandlers(card);
+          }
+        }
+      }
+
+      function switchCard(direction) {
+        if (isAnimating) return;
+        const total = recipes.length;
+        if (total <= 1) return;
+        isAnimating = true;
+
+        const currentCard = stack.querySelector(".card");
+        const leaveClass = direction === "next" ? "is-leave-left" : "is-leave-right";
+        currentCard.classList.add(leaveClass);
+
+        currentCard.addEventListener(
+          "animationend",
+          () => {
+            currentIndex =
+              direction === "next"
+                ? (currentIndex + 1) % total
+                : (currentIndex - 1 + total) % total;
+            isAnimating = false;
+            renderStack();
+          },
+          { once: true }
+        );
+      }
+
+      function addDragHandlers(card) {
+        let startX = 0;
+        let currentX = 0;
+        let isDragging = false;
+
+        const onPointerMove = (event) => {
+          if (!isDragging) return;
+          currentX = event.clientX - startX;
+          card.style.transform = `translateX(${currentX}px)`;
+        };
+
+        const onPointerUp = () => {
+          if (!isDragging) return;
+          isDragging = false;
+          card.classList.remove("is-dragging");
+          card.releasePointerCapture(pointerId);
+          const threshold = 60;
+          if (currentX <= -threshold) {
+            card.style.transform = "";
+            switchCard("next");
+          } else if (currentX >= threshold) {
+            card.style.transform = "";
+            switchCard("prev");
+          } else {
+            card.style.transform = "";
+          }
+        };
+
+        let pointerId = null;
+        card.addEventListener("pointerdown", (event) => {
+          if (isAnimating) return;
+          pointerId = event.pointerId;
+          startX = event.clientX;
+          currentX = 0;
+          isDragging = true;
+          card.classList.add("is-dragging");
+          card.setPointerCapture(pointerId);
+        });
+
+        card.addEventListener("pointermove", onPointerMove);
+        card.addEventListener("pointerup", onPointerUp);
+        card.addEventListener("pointercancel", onPointerUp);
+      }
+
+      renderStack();
+
+      const prevButton = stack.querySelector(".edge-button--left");
+      const nextButton = stack.querySelector(".edge-button--right");
+
+      prevButton.addEventListener("click", () => switchCard("prev"));
+      nextButton.addEventListener("click", () => switchCard("next"));
+    </script>
+  </body>
+</html>

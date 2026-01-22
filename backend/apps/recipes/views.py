@@ -12,10 +12,18 @@ class RecipeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Recipe.objects.prefetch_related("recipe_ingredients__ingredient")
     serializer_class = RecipeSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ["meal_type", "difficulty"]
+    filterset_fields = ["difficulty"]
     search_fields = ["title"]
     ordering_fields = ["created_at", "difficulty", "duration"]
     ordering = ["-created_at"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # 支持 meal_type 参数筛选（SQLite 兼容）
+        meal_type = self.request.query_params.get("meal_type")
+        if meal_type:
+            queryset = queryset.filter(meal_types__icontains=f'"{meal_type}"')
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "retrieve":

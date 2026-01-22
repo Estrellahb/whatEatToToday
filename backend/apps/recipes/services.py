@@ -21,7 +21,7 @@ class RecipeService:
         获取推荐食谱（MVP 版本：随机抽取）
         
         Args:
-            meal_type: 餐段类型 breakfast/lunch/dinner
+            meal_type: 餐段类型 breakfast/lunch/dinner/dessert/drink
             count: 返回数量
         
         Returns:
@@ -30,7 +30,8 @@ class RecipeService:
         queryset = Recipe.objects.all()
         
         if meal_type:
-            queryset = queryset.filter(meal_type=meal_type)
+            # SQLite 兼容：使用字符串匹配查询 JSONField
+            queryset = queryset.filter(meal_types__icontains=f'"{meal_type}"')
         
         result = queryset.order_by("?")[:count]
         logger.info(f"获取推荐食谱: meal_type={meal_type}, count={count}, 实际返回={result.count()}")

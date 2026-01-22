@@ -9,12 +9,12 @@ class RecipeIngredientInline(admin.TabularInline):
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ["title", "difficulty", "duration", "meal_type", "servings", "created_at"]
-    list_filter = ["difficulty", "meal_type", "created_at"]
+    list_display = ["title", "difficulty", "duration", "get_meal_types_str", "servings", "created_at"]
+    list_filter = ["difficulty", "created_at"]
     search_fields = ["title"]
     fieldsets = (
         ("基本信息", {
-            "fields": ("title", "meal_type", "difficulty", "duration", "servings")
+            "fields": ("title", "meal_types", "difficulty", "duration", "servings")
         }),
         ("内容", {
             "fields": ("cover_url", "source_url", "steps", "tools", "tips")
@@ -26,3 +26,7 @@ class RecipeAdmin(admin.ModelAdmin):
     )
     readonly_fields = ["created_at", "updated_at"]
     inlines = [RecipeIngredientInline]
+
+    @admin.display(description="适用餐段")
+    def get_meal_types_str(self, obj):
+        return ", ".join(obj.get_meal_types_display())

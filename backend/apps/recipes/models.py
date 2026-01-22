@@ -8,11 +8,28 @@ from common.models import BaseModel
 
 class Recipe(BaseModel):
     """食谱"""
-    MEAL_TYPE_CHOICES = [
-        ("breakfast", "早餐"),
-        ("lunch", "午餐"),
-        ("dinner", "晚餐"),
-    ]
+    # 可选的餐段类型
+    MEAL_TYPE_OPTIONS = {
+        "breakfast": "早餐",
+        "lunch": "午餐",
+        "dinner": "晚餐",
+        "dessert": "甜点",
+        "drink": "饮品",
+    }
+
+    # 菜品类型选项
+    DISH_TYPE_OPTIONS = {
+        "aquatic": "水产",
+        "breakfast": "早餐",
+        "condiment": "调味品",
+        "dessert": "甜点",
+        "drink": "饮品",
+        "meat_dish": "肉菜",
+        "semi-finished": "半成品",
+        "soup": "汤类",
+        "staple": "主食",
+        "vegetable_dish": "素菜",
+    }
 
     title = models.CharField("菜名", max_length=100)
     difficulty = models.PositiveSmallIntegerField(
@@ -23,11 +40,10 @@ class Recipe(BaseModel):
     duration = models.PositiveIntegerField("耗时(分钟)", default=30)
     cover_url = models.URLField("封面图", blank=True, null=True)
     source_url = models.URLField("来源链接", blank=True, null=True)
-    meal_type = models.CharField(
-        "餐段",
-        max_length=20,
-        choices=MEAL_TYPE_CHOICES,
-        default="lunch"
+    meal_types = models.JSONField(
+        "适用餐段",
+        default=list,
+        help_text="可选值: breakfast, lunch, dinner, dessert, drink"
     )
     steps = models.JSONField(
         "烹饪步骤",
@@ -46,19 +62,30 @@ class Recipe(BaseModel):
         null=True
     )
     tips = models.TextField("附加提示", blank=True)
+    dish_type = models.CharField(
+        "菜品类型",
+        max_length=20,
+        choices=[(k, v) for k, v in DISH_TYPE_OPTIONS.items()],
+        blank=True,
+        null=True,
+        help_text="菜品分类：aquatic/breakfast/condiment/dessert/drink/meat_dish/semi-finished/soup/staple/vegetable_dish"
+    )
 
     class Meta:
         verbose_name = "食谱"
         verbose_name_plural = verbose_name
         ordering = ["-created_at"]
         indexes = [
-            Index(fields=["meal_type"], name="recipe_meal_idx"),
             Index(fields=["difficulty"], name="recipe_diff_idx"),
             Index(fields=["created_at"], name="recipe_created_idx"),
         ]
 
     def __str__(self) -> str:
         return self.title
+
+    def get_meal_types_display(self) -> list[str]:
+        """获取餐段显示名称列表"""
+        return [self.MEAL_TYPE_OPTIONS.get(mt, mt) for mt in self.meal_types]
 
 
 class RecipeIngredient(BaseModel):
