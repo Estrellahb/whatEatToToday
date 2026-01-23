@@ -51,21 +51,31 @@ jobs:
         working-directory: ./frontend/android
         run: ./gradlew assembleRelease
 
+      - name: Prepare Signing Key
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > frontend/android/app/build/outputs/apk/release/signingKey.jks
+
       - name: Sign APK
-        uses: r0adkll/sign-android-release@v1
-        id: sign_app
-        with:
-          releaseDirectory: frontend/android/app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        env:
-          BUILD_TOOLS_VERSION: "34.0.0"
+        working-directory: ./frontend/android/app/build/outputs/apk/release
+        run: |
+          # 对齐 APK
+          /usr/local/lib/android/sdk/build-tools/34.0.0/zipalign -v -p 4 app-release.apk app-release-aligned.apk
+          
+          # 签名 APK
+          /usr/local/lib/android/sdk/build-tools/34.0.0/apksigner sign \
+            --ks signingKey.jks \
+            --ks-key-alias "${{ secrets.ANDROID_KEY_ALIAS }}" \
+            --ks-pass pass:"${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" \
+            --key-pass pass:"${{ secrets.ANDROID_KEY_PASSWORD }}" \
+            --out app-release-signed.apk \
+            app-release-aligned.apk
+          
+          # 验证签名
+          /usr/local/lib/android/sdk/build-tools/34.0.0/apksigner verify app-release-signed.apk
 
       - name: Prepare Signed APK File
         run: |
-          mv ${{ steps.sign_app.outputs.signedReleaseFile }} whattoeattoday-${{ github.ref_name }}-signed.apk
+          mv frontend/android/app/build/outputs/apk/release/app-release-signed.apk whattoeattoday-${{ github.ref_name }}-signed.apk
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
