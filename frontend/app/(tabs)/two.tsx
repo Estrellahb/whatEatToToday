@@ -12,21 +12,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { getFavoriteIds, toggleFavorite, isFavorite } from '@/utils/favorites';
+import { getRecipesByIds, Recipe } from '@/utils/localData';
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
-const API_IMAGE_BASE_URL = 'http://localhost:8000';
 const CARD_THEMES = ['#f9745b', '#f7b733', '#6dd5ed', '#9b59b6', '#f39c12'];
-
-interface Recipe {
-  id: number;
-  title: string;
-  difficulty: number;
-  difficulty_display?: string;
-  cover_url?: string | null;
-  meal_types_display?: string[];
-  dish_type_display?: string;
-  duration?: number;
-}
 
 const getCoverUrl = (coverUrl?: string | null) => {
   if (!coverUrl) {
@@ -35,7 +23,7 @@ const getCoverUrl = (coverUrl?: string | null) => {
   if (coverUrl.startsWith('http')) {
     return coverUrl;
   }
-  return `${API_IMAGE_BASE_URL}/${coverUrl}`;
+  return coverUrl;
 };
 
 export default function FavoritesScreen() {
@@ -57,24 +45,9 @@ export default function FavoritesScreen() {
         return;
       }
 
-      // 并行获取所有收藏的食谱详情
-      const results = await Promise.all(
-        ids.map(async (id) => {
-          try {
-            const response = await fetch(`${API_BASE_URL}/recipes/${id}/`);
-            if (!response.ok) {
-              return null;
-            }
-            const data = (await response.json()) as Recipe;
-            return data;
-          } catch {
-            return null;
-          }
-        })
-      );
-
-      const validRecipes = results.filter((r): r is Recipe => r !== null);
-      setRecipes(validRecipes);
+      // 获取所有收藏的食谱详情
+      const results = getRecipesByIds(ids);
+      setRecipes(results);
     } catch (fetchError) {
       setError(fetchError instanceof Error ? fetchError.message : '加载失败');
     }

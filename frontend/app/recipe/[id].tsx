@@ -11,8 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { getRecipeImageSource, getRecipeGalleryImages } from '@/utils/recipeImages';
-
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+import { getRecipeById } from '@/utils/localData';
 
 interface Ingredient {
   ingredient_id: number;
@@ -55,12 +54,15 @@ export default function RecipeDetailScreen() {
       try {
         setIsLoading(true);
         setError('');
-        const response = await fetch(`${API_BASE_URL}/recipes/${id}/`);
-        if (!response.ok) {
-          throw new Error('请求失败');
+        if (!id) {
+          throw new Error('缺少食谱ID');
         }
-        const data = (await response.json()) as RecipeDetail;
-        setRecipe(data);
+        const recipeId = parseInt(id, 10);
+        const data = getRecipeById(recipeId);
+        if (!data) {
+          throw new Error('食谱不存在');
+        }
+        setRecipe(data as RecipeDetail);
       } catch (fetchError) {
         setError(fetchError instanceof Error ? fetchError.message : '加载失败');
       } finally {

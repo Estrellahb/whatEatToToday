@@ -13,8 +13,8 @@ import { useRouter } from 'expo-router';
 import { isFavorite, toggleFavorite, getFavoriteIds } from '@/utils/favorites';
 import SearchBar from '@/components/SearchBar';
 import RecipeImage from '@/components/RecipeImage';
+import { getRecommendations, Recipe } from '@/utils/localData';
 
-const API_BASE_URL = 'http://localhost:8000/api/v1';
 const CARD_THEMES = ['#f9745b', '#f7b733', '#6dd5ed', '#9b59b6', '#f39c12'];
 
 const MEAL_SECTIONS = [
@@ -24,16 +24,6 @@ const MEAL_SECTIONS = [
   { key: 'dessert', title: '🍰 甜点', mealType: 'dessert', count: 1 },
   { key: 'drink', title: '🥤 饮品', mealType: 'drink', count: 1 },
 ];
-
-interface Recipe {
-  id: number;
-  title: string;
-  difficulty: number;
-  difficulty_display?: string;
-  meal_types_display?: string[];
-  dish_type?: string | null;
-  dish_type_display?: string;
-}
 
 interface Section {
   key: string;
@@ -52,19 +42,11 @@ export default function HomeScreen() {
   const fetchRecipes = useCallback(async () => {
     try {
       setError('');
-      // 并行请求各餐段的随机推荐
-      const results = await Promise.all(
-        MEAL_SECTIONS.map(async ({ key, title, mealType, count }) => {
-          const response = await fetch(
-            `${API_BASE_URL}/recipes/recommend/?meal_type=${mealType}&count=${count}`
-          );
-          if (!response.ok) {
-            return { key, title, data: [] };
-          }
-          const data = (await response.json()) as Recipe[];
-          return { key, title, data };
-        })
-      );
+      // 并行获取各餐段的随机推荐
+      const results = MEAL_SECTIONS.map(({ key, title, mealType, count }) => {
+        const data = getRecommendations(mealType, count);
+        return { key, title, data };
+      });
       setSections(results.filter((s) => s.data.length > 0));
     } catch (fetchError) {
       setError(fetchError instanceof Error ? fetchError.message : '加载失败');
@@ -93,15 +75,10 @@ export default function HomeScreen() {
 
     setRefreshingKeys((prev) => ({ ...prev, [sectionKey]: true }));
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/recipes/recommend/?meal_type=${config.mealType}&count=${config.count}`
+      const data = getRecommendations(config.mealType, config.count);
+      setSections((prev) =>
+        prev.map((s) => (s.key === sectionKey ? { ...s, data } : s))
       );
-      if (response.ok) {
-        const data = (await response.json()) as Recipe[];
-        setSections((prev) =>
-          prev.map((s) => (s.key === sectionKey ? { ...s, data } : s))
-        );
-      }
     } finally {
       setRefreshingKeys((prev) => ({ ...prev, [sectionKey]: false }));
     }

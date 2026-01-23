@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+import { searchRecipes as searchRecipesLocal, Recipe } from './localData';
 
 export interface SearchRecipe {
   id: number;
@@ -30,46 +30,35 @@ export const searchRecipes = async (
   page: number = 1,
   pageSize: number = 20
 ): Promise<SearchResult> => {
-  if (!keyword.trim()) {
-    return {
-      count: 0,
-      next: null,
-      previous: null,
-      results: [],
-    };
-  }
-
-  try {
-    const params = new URLSearchParams({
-      search: keyword.trim(),
-      page: page.toString(),
-      page_size: pageSize.toString(),
-    });
-
-    const response = await fetch(`${API_BASE_URL}/recipes/?${params.toString()}`);
-    
-    if (!response.ok) {
-      throw new Error(`搜索失败: ${response.status}`);
-    }
-
-    const data = (await response.json()) as SearchResult;
-    return data;
-  } catch (error) {
-    throw new Error(
-      error instanceof Error ? error.message : '搜索请求失败'
-    );
-  }
+  const result = searchRecipesLocal(keyword, page, pageSize);
+  
+  // 转换格式以匹配原有接口
+  return {
+    count: result.count,
+    next: result.next,
+    previous: result.previous,
+    results: result.results.map((recipe: Recipe): SearchRecipe => ({
+      id: recipe.id,
+      title: recipe.title,
+      difficulty: recipe.difficulty,
+      difficulty_display: recipe.difficulty_display,
+      cover_url: null,
+      meal_types_display: recipe.meal_types_display,
+      dish_type_display: recipe.dish_type_display || undefined,
+      duration: recipe.duration,
+    })),
+  };
 };
 
 /**
- * 获取封面图 URL
+ * 获取封面图 URL（已废弃，不再使用）
  */
-export const getCoverUrl = (coverUrl?: string | null, baseUrl: string = 'http://localhost:8000') => {
+export const getCoverUrl = (coverUrl?: string | null) => {
   if (!coverUrl) {
     return 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=800&q=80';
   }
   if (coverUrl.startsWith('http')) {
     return coverUrl;
   }
-  return `${baseUrl}/${coverUrl}`;
+  return coverUrl;
 };

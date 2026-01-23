@@ -16,7 +16,6 @@ import { searchRecipes, SearchRecipe, getCoverUrl } from '@/utils/search';
 import { isFavorite, toggleFavorite, getFavoriteIds } from '@/utils/favorites';
 
 const CARD_THEMES = ['#f9745b', '#f7b733', '#6dd5ed', '#9b59b6', '#f39c12'];
-const API_IMAGE_BASE_URL = 'http://localhost:8000';
 
 export default function SearchScreen() {
   const { q } = useLocalSearchParams<{ q?: string }>();
@@ -107,7 +106,7 @@ export default function SearchScreen() {
         <View style={[styles.cardAccent, { backgroundColor: headerColor }]} />
         <Image
           style={styles.cover}
-          source={{ uri: getCoverUrl(item.cover_url, API_IMAGE_BASE_URL) }}
+          source={{ uri: getCoverUrl(item.cover_url) }}
           resizeMode="cover"
         />
         <View style={styles.cardBody}>
