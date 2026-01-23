@@ -107,12 +107,6 @@ export default function RecipeDetailScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* 返回按钮 */}
-        <Pressable style={styles.backHeader} onPress={() => router.back()}>
-          <Text style={styles.backIcon}>←</Text>
-          <Text style={styles.backText}>返回</Text>
-        </Pressable>
-
         {/* 封面图 */}
         <Image style={styles.coverImage} source={{ uri: getCoverUrl(recipe.cover_url) }} />
 
@@ -179,21 +173,6 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-  },
-  backHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  backIcon: {
-    fontSize: 20,
-    color: '#333',
-    marginRight: 6,
-  },
-  backText: {
-    fontSize: 16,
-    color: '#333',
   },
   coverImage: {
     width: '100%',

@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { isFavorite, toggleFavorite, getFavoriteIds } from '@/utils/favorites';
+import SearchBar from '@/components/SearchBar';
 
 const API_BASE_URL = 'http://localhost:8000/api/v1';
 const API_IMAGE_BASE_URL = 'http://localhost:8000';
@@ -56,7 +58,7 @@ export default function HomeScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState('');
-  const [favorites, setFavorites] = useState<Record<number, boolean>>({});
+  const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
 
   const fetchRecipes = useCallback(async () => {
     try {
@@ -83,6 +85,8 @@ export default function HomeScreen() {
   useEffect(() => {
     setIsLoading(true);
     fetchRecipes().finally(() => setIsLoading(false));
+    // 加载收藏状态
+    setFavoriteIds(getFavoriteIds());
   }, [fetchRecipes]);
 
   const handleRefresh = useCallback(async () => {
@@ -134,7 +138,7 @@ export default function HomeScreen() {
 
   const renderItem = ({ item }: { item: Recipe }) => {
     const headerColor = CARD_THEMES[item.id % CARD_THEMES.length];
-    const isFavorite = Boolean(favorites[item.id]);
+    const itemIsFavorite = isFavorite(item.id);
     const difficultyStars = '★'.repeat(item.difficulty || 1);
     const emptyStars = '☆'.repeat(Math.max(0, 5 - (item.difficulty || 1)));
 
@@ -161,11 +165,12 @@ export default function HomeScreen() {
               style={styles.favoriteButton}
               onPress={(e) => {
                 e.stopPropagation();
-                setFavorites((prev) => ({ ...prev, [item.id]: !prev[item.id] }));
+                toggleFavorite(item.id);
+                setFavoriteIds(getFavoriteIds());
               }}
             >
-              <Text style={[styles.heart, isFavorite && styles.heartActive]}>
-                {isFavorite ? '♥' : '♡'}
+              <Text style={[styles.heart, itemIsFavorite && styles.heartActive]}>
+                {itemIsFavorite ? '♥' : '♡'}
               </Text>
             </Pressable>
           </View>
@@ -195,6 +200,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      <SearchBar />
       <SectionList
         sections={sections}
         keyExtractor={(item) => item.id.toString()}
