@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Image,
   Pressable,
   RefreshControl,
   SectionList,
@@ -13,9 +12,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { isFavorite, toggleFavorite, getFavoriteIds } from '@/utils/favorites';
 import SearchBar from '@/components/SearchBar';
+import RecipeImage from '@/components/RecipeImage';
 
 const API_BASE_URL = 'http://localhost:8000/api/v1';
-const API_IMAGE_BASE_URL = 'http://localhost:8000';
 const CARD_THEMES = ['#f9745b', '#f7b733', '#6dd5ed', '#9b59b6', '#f39c12'];
 
 const MEAL_SECTIONS = [
@@ -31,8 +30,8 @@ interface Recipe {
   title: string;
   difficulty: number;
   difficulty_display?: string;
-  cover_url?: string | null;
   meal_types_display?: string[];
+  dish_type?: string | null;
   dish_type_display?: string;
 }
 
@@ -41,16 +40,6 @@ interface Section {
   title: string;
   data: Recipe[];
 }
-
-const getCoverUrl = (coverUrl?: string | null) => {
-  if (!coverUrl) {
-    return 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=800&q=80';
-  }
-  if (coverUrl.startsWith('http')) {
-    return coverUrl;
-  }
-  return `${API_IMAGE_BASE_URL}/${coverUrl}`;
-};
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -148,7 +137,12 @@ export default function HomeScreen() {
         onPress={() => router.push({ pathname: '/recipe/[id]', params: { id: item.id.toString() } })}
       >
         <View style={[styles.cardAccent, { backgroundColor: headerColor }]} />
-        <Image style={styles.cover} source={{ uri: getCoverUrl(item.cover_url) }} />
+        <RecipeImage
+          title={item.title}
+          dishType={item.dish_type}
+          style={styles.cover}
+          resizeMode="cover"
+        />
         <View style={styles.cardBody}>
           <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
           <Text style={styles.cardSubtitle}>
@@ -266,6 +260,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
+    alignItems: 'stretch',
     backgroundColor: '#fff',
     borderRadius: 16,
     marginVertical: 6,
@@ -280,8 +275,7 @@ const styles = StyleSheet.create({
     width: 6,
   },
   cover: {
-    width: 100,
-    height: 100,
+    // 样式已移至 RecipeImage 组件内部
   },
   cardBody: {
     flex: 1,

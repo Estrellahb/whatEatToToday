@@ -105,7 +105,11 @@ export default function SearchScreen() {
         onPress={() => router.push({ pathname: '/recipe/[id]', params: { id: item.id.toString() } })}
       >
         <View style={[styles.cardAccent, { backgroundColor: headerColor }]} />
-        <Image style={styles.cover} source={{ uri: getCoverUrl(item.cover_url, API_IMAGE_BASE_URL) }} />
+        <Image
+          style={styles.cover}
+          source={{ uri: getCoverUrl(item.cover_url, API_IMAGE_BASE_URL) }}
+          resizeMode="cover"
+        />
         <View style={styles.cardBody}>
           <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
           <Text style={styles.cardSubtitle}>
@@ -322,6 +326,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flexDirection: 'row',
+    alignItems: 'stretch',
     backgroundColor: '#fff',
     borderRadius: 16,
     marginVertical: 6,
@@ -337,7 +342,8 @@ const styles = StyleSheet.create({
   },
   cover: {
     width: 100,
-    height: 100,
+    minHeight: 100,
+    alignSelf: 'stretch',
   },
   cardBody: {
     flex: 1,

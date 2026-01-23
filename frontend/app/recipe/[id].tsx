@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { getRecipeImageSource, getRecipeGalleryImages } from '@/utils/recipeImages';
 
 const API_BASE_URL = 'http://localhost:8000/api/v1';
-const API_IMAGE_BASE_URL = 'http://localhost:8000';
 
 interface Ingredient {
   ingredient_id: number;
@@ -34,6 +34,7 @@ interface RecipeDetail {
   duration: number;
   cover_url?: string | null;
   meal_types_display?: string[];
+  dish_type?: string | null;
   servings?: number | null;
   steps: Step[];
   tools: string[];
@@ -41,15 +42,6 @@ interface RecipeDetail {
   ingredients: Ingredient[];
 }
 
-const getCoverUrl = (coverUrl?: string | null) => {
-  if (!coverUrl) {
-    return 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=800&q=80';
-  }
-  if (coverUrl.startsWith('http')) {
-    return coverUrl;
-  }
-  return `${API_IMAGE_BASE_URL}/${coverUrl}`;
-};
 
 export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -103,12 +95,13 @@ export default function RecipeDetailScreen() {
   const difficultyStars = '★'.repeat(recipe.difficulty || 1);
   const emptyStars = '☆'.repeat(Math.max(0, 5 - (recipe.difficulty || 1)));
   const mealLabel = recipe.meal_types_display?.join(' / ') ?? '';
+  const galleryImages = getRecipeGalleryImages(recipe.title, recipe.dish_type);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* 封面图 */}
-        <Image style={styles.coverImage} source={{ uri: getCoverUrl(recipe.cover_url) }} />
+        <Image style={styles.coverImage} source={getRecipeImageSource(recipe.title, recipe.dish_type)} />
 
         {/* 标题区 */}
         <View style={styles.headerSection}>
@@ -155,6 +148,20 @@ export default function RecipeDetailScreen() {
             <Text style={styles.sectionTitle}>小贴士</Text>
             <View style={styles.tipsBox}>
               <Text style={styles.tipsText}>{recipe.tips}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* 图集 */}
+        {galleryImages.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>图集</Text>
+            <View style={styles.galleryContainer}>
+              {galleryImages.map((imageSource, index) => (
+                <View key={index} style={styles.galleryItem}>
+                  <Image source={imageSource} style={styles.galleryImage} resizeMode="cover" />
+                </View>
+              ))}
             </View>
           </View>
         )}
@@ -296,5 +303,21 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: '#fff',
     fontSize: 14,
+  },
+  galleryContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  galleryItem: {
+    width: '48%',
+    aspectRatio: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#f0f0f0',
+  },
+  galleryImage: {
+    width: '100%',
+    height: '100%',
   },
 });

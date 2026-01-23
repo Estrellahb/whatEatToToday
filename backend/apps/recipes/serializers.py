@@ -27,7 +27,6 @@ class RecipeSerializer(serializers.ModelSerializer):
             "difficulty",
             "difficulty_display",
             "duration",
-            "cover_url",
             "meal_types",
             "meal_types_display",
             "dish_type",
@@ -51,6 +50,5 @@ class RecipeDetailSerializer(RecipeSerializer):
             "steps",
             "tools",
             "tips",
-            "source_url",
             "ingredients",
         ]

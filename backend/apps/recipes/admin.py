@@ -17,7 +17,7 @@ class RecipeAdmin(admin.ModelAdmin):
             "fields": ("title", "meal_types", "difficulty", "duration", "servings")
         }),
         ("内容", {
-            "fields": ("cover_url", "source_url", "steps", "tools", "tips")
+            "fields": ("steps", "tools", "tips")
         }),
         ("时间", {
             "fields": ("created_at", "updated_at"),

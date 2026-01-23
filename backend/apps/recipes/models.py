@@ -38,8 +38,6 @@ class Recipe(BaseModel):
         default=3
     )
     duration = models.PositiveIntegerField("耗时(分钟)", default=30)
-    cover_url = models.URLField("封面图", blank=True, null=True)
-    source_url = models.URLField("来源链接", blank=True, null=True)
     meal_types = models.JSONField(
         "适用餐段",
         default=list,
