@@ -63,3 +63,7 @@ htmlcov/
 .coverage.*
 .pytest_cache/
 coverage.xml
+
+# ===== 其他 =====
+my-release-key.keystore
+my-release-key.jks

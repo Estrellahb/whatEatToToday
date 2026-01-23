@@ -1,21 +1,14 @@
-name: Build and Release
+name: Build and Signed Release
 
 on:
   push:
-    branches:
-      - main
-      - master
     tags:
-      - 'v*'
-  pull_request:
-    branches:
-      - main
-      - master
+      - 'v*'  # 只有创建 v* 格式的 tag 时才触发
   workflow_dispatch:  # 允许手动触发
 
 jobs:
   build-android:
-    name: Build Android APK
+    name: Build & Sign Android
     runs-on: ubuntu-latest
     permissions:
       contents: write  # 需要写入权限来创建 Release
@@ -36,6 +29,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+          cache: 'gradle' # 💡 优化：缓存 Gradle 依赖，下次构建更快
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -44,162 +38,56 @@ jobs:
         working-directory: ./frontend
         run: npm ci
 
-      - name: Install Expo CLI
+      - name: Prebuild Android
         working-directory: ./frontend
-        run: npm install -g @expo/cli eas-cli
+        run: npx expo prebuild --platform android --clean
 
-      - name: Setup Expo
-        working-directory: ./frontend
-        run: |
-          npx expo install --fix
+      # 💡 关键修正 1: 给 gradlew 赋予执行权限，防止 Permission Denied
+      - name: Make Gradlew Executable
+        working-directory: ./frontend/android
+        run: chmod +x gradlew
 
-      - name: Build Android APK
-        working-directory: ./frontend
-        env:
-          EXPO_PUBLIC_API_URL: ${{ secrets.API_URL || 'http://localhost:8000' }}
-        run: |
-          npx expo export:embed
-          npx eas build --platform android --profile preview --non-interactive --no-wait
-        continue-on-error: true
+      # 💡 关键修正 2: 构建 APK
+      - name: Build Unsigned APK
+        working-directory: ./frontend/android
+        run: ./gradlew assembleRelease
 
-      # 如果 EAS Build 不可用，使用本地构建
-      - name: Build Android APK (Local)
-        if: failure()
-        working-directory: ./frontend
-        env:
-          EXPO_PUBLIC_API_URL: ${{ secrets.API_URL || 'http://localhost:8000' }}
-        run: |
-          npx expo prebuild --platform android --clean
-          cd android
-          ./gradlew assembleRelease
-          cd ..
-
-      - name: Find APK
-        id: find-apk
-        working-directory: ./frontend
-        run: |
-          if [ -f "android/app/build/outputs/apk/release/app-release.apk" ]; then
-            echo "apk_path=android/app/build/outputs/apk/release/app-release.apk" >> $GITHUB_OUTPUT
-            echo "apk_name=app-release.apk" >> $GITHUB_OUTPUT
-          elif [ -f "*.apk" ]; then
-            APK_FILE=$(ls *.apk | head -n 1)
-            echo "apk_path=$APK_FILE" >> $GITHUB_OUTPUT
-            echo "apk_name=$APK_FILE" >> $GITHUB_OUTPUT
-          else
-            echo "APK file not found"
-            exit 1
-          fi
-
-      - name: Get version and rename APK
-        id: rename-apk
-        working-directory: ./frontend
-        run: |
-          # 从 app.json 读取版本号
-          VERSION=$(node -p "require('./app.json').expo.version")
-          # 生成时间戳 (YYYYMMDD_HHMMSS)
-          TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-          # 构建新文件名
-          NEW_NAME="WhatToEatToday_${VERSION}_${TIMESTAMP}.apk"
-          # 重命名文件
-          mv "${{ steps.find-apk.outputs.apk_path }}" "$NEW_NAME"
-          # 输出新路径和名称
-          echo "apk_path=$NEW_NAME" >> $GITHUB_OUTPUT
-          echo "apk_name=$NEW_NAME" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+      # 💡 关键修正 3: 使用你刚才配置的 Secrets 进行签名
+      - name: Sign APK
+        uses: r0adkll/sign-android-release@v1
+        id: sign_app
         with:
-          name: android-apk
-          path: ${{ steps.rename-apk.outputs.apk_path }}
-          retention-days: 30
+          releaseDirectory: frontend/android/app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          alias: ${{ secrets.ANDROID_KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: "34.0.0"
+
+      # 💡 关键修正 4: 重命名已签名的 APK 方便识别
+      - name: Prepare Signed APK File
+        run: |
+          mv ${{ steps.sign_app.outputs.signedReleaseFile }} whattoeattoday-${{ github.ref_name }}-signed.apk
 
       - name: Create Release
+        uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
         with:
-          files: ${{ steps.rename-apk.outputs.apk_path }}
+          # 💡 使用签名后的文件
+          files: whattoeattoday-${{ github.ref_name }}-signed.apk
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           body: |
-            ## 🚀 自动构建发布
+            ## 🚀 每天吃点啥 - ${{ github.ref_name }}
             
-            ### Android APK
-            - 版本: ${{ github.ref_name }}
-            - 构建时间: ${{ github.event.head_commit.timestamp }}
-            - 提交: ${{ github.event.head_commit.message }}
+            ### 📱 Android APK
+            - **状态**: ✅ 已签名 (直接安装)
+            - **版本**: ${{ github.ref_name }}
+            - **提交信息**: ${{ github.event.head_commit.message }}
             
-            ### 下载
-            点击下方文件下载 APK 安装包。
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  build-ios:
-    name: Build iOS IPA
-    runs-on: macos-latest
-    permissions:
-      contents: write
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dir: ./frontend/.npm
-
-      - name: Install dependencies
-        working-directory: ./frontend
-        run: npm ci
-
-      - name: Install Expo CLI
-        working-directory: ./frontend
-        run: npm install -g @expo/cli eas-cli
-
-      - name: Setup Expo
-        working-directory: ./frontend
-        run: |
-          npx expo install --fix
-
-      - name: Build iOS IPA
-        working-directory: ./frontend
-        env:
-          EXPO_PUBLIC_API_URL: ${{ secrets.API_URL || 'http://localhost:8000' }}
-        run: |
-          npx eas build --platform ios --profile preview --non-interactive --no-wait
-        continue-on-error: true
-
-      - name: Upload IPA artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-ipa
-          path: "*.ipa"
-          retention-days: 30
-
-      - name: Create Release (iOS)
-        if: startsWith(github.ref, 'refs/tags/') && success()
-        uses: softprops/action-gh-release@v1
-        with:
-          files: "*.ipa"
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          body: |
-            ## 🚀 自动构建发布
-            
-            ### iOS IPA
-            - 版本: ${{ github.ref_name }}
-            - 构建时间: ${{ github.event.head_commit.timestamp }}
-            - 提交: ${{ github.event.head_commit.message }}
-            
-            ### 下载
-            点击下方文件下载 IPA 安装包。
+            ---
+            *自动构建于 ${{ github.event.head_commit.timestamp }}*
           draft: false
           prerelease: false
         env:
