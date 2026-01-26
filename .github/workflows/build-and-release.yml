@@ -52,9 +52,15 @@ jobs:
         run: ./gradlew assembleRelease
 
       - name: Prepare Signing Key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > frontend/android/app/build/outputs/apk/release/signingKey.jks
-
+          # 创建输出目录，防止路径不存在
+          mkdir -p frontend/android/app/build/outputs/apk/release/
+          
+          # 解码并忽略可能存在的干扰字符
+          echo "$KEYSTORE_BASE64" | base64 -d > frontend/android/app/build/outputs/apk/release/signingKey.jks
+      
       - name: Sign APK
         working-directory: ./frontend/android/app/build/outputs/apk/release
         run: |
